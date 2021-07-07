@@ -10,11 +10,11 @@ node server.js *[ip]* *[port]*
 Having a custom IP and Port are optional, but an IP must be given for a custom port to be used
 
 # Installation Method 1 (Simple Installer)
-- Windows: 
+- Windows x64: 
   1) Download and extract https://github.com/Sid12323/nodehttpserver/releases/download/v2.1-public/nhsi.zip (NHSI.zip [NodeHttpServerInstaller)
   2) Run install.bat
   3) Enjoy!
-  3.1) If you want more customization and want to run it later, continue at ##3 for installation method 2.
+  3.1) If you want more customization and want to run it later, continue at ##3 for installation method 2, but use "node-v16.4.2-win-x64/node.exe" instead of "node".
   
  - Other: Use Installation Method 2
 
@@ -26,7 +26,7 @@ CLI:
 
 - MacOs: (?)
 
-- Windows: (?)
+- Windows: Follow Install method 1
 
 GUI: Follow the instructions at https://nodejs.org/en/download/
 
