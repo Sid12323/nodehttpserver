@@ -1,108 +1,147 @@
 'use strict';
-//default dependencies (import)
 const http = require('http');
 const fs = require("fs");
 const url = require("url");
 const path = require('path');
-//server init vars
-var hostname = '0.0.0.0'
-var port = '8080'
-var current_err = "";
-//var path = ""; //
-var pathname = "/";
-var statc = 200;
-//misc vars
-var contentss = "";
-var loadTime,a;
 
-//mime
-var dir = path.join(__dirname, 'public');
-var mime = {
-    html: 'text/html',
-    txt: 'text/plain',
+let current_err = "";
+let currentStatusCode = 500;
+let hostname = '0.0.0.0'
+let loadTime,time;
+
+let charset = "utf-8";
+let port = '8080'
+
+const issueUnknown = "<h1>abc errors are free | Internal Server Error (500)</h1>";
+let bodyResponses = {
+  403: "403: Forbidden",
+  404: "<h1>404: Not Found</h1>",
+  500: issueUnknown,
+  501: "501: Method not implemented",
+  blank: "There's nothing here"
+}
+
+let dir = path.join(__dirname, 'public');
+let mime = {
+    html: 'text/html', //common text based
+    htm: 'text/html',
     css: 'text/css',
-    gif: 'image/gif',
+    txt: 'text/plain',
+    csv: 'text/csv',
+    gif: 'image/gif', //images
     jpg: 'image/jpeg',
+    jpeg: 'image/jpeg',
+    ico: 'image/x-icon',
     png: 'image/png',
     svg: 'image/svg+xml',
-    js: 'application/javascript',
-    ico: 'image/x-icon'
+    js: 'application/javascript', //functionality
+    xml: 'application/xml',
+    json: 'application/json',
+    pdf: 'application/pdf',
+    mp4: 'video/mp4', //video/audio
+    mov: 'video/quicktime',
+    avi: 'video/x-msvideo',
+    mp3: 'audio/mp3',
+    wav: 'audio/wav',
+    zip: 'application/zip', //compression
+    tar: 'application/x-tar',
+    rar: 'application/x-rar-compressed',
+    "7z": 'application/x-7z-compressed',
+    ttf: 'font/ttf', //fonts
+    otf: 'font/otf',
+    woff: 'font/woff',
+    woff2: 'font/woff2',
+    xls: 'application/vnd.ms-excel', //specific applications
+    doc: 'application/msword',
+    ppt: 'application/vnd.ms-powerpoint'
+    // Add more MIME types as needed
 };
 
-//cli args interpreter
-const cliArgs = process.argv.slice(2);
-if (cliArgs[0] != null) {hostname = cliArgs[0];} //hostname set
-if (cliArgs[1] != null) {port = cliArgs[1];} //port set
+
+
 
 //functionz
 function startloadingtimer() {
-  var b = Date.now();
-  a = b;
+  time = Date.now();
+}
+function stoploadingtimer() {
+  loadTime = Date.now() - time;
 }
 
-startloadingtimer();
-
-function stoploadingtimer() {
-  var e = Date.now();
-  var c = e-a;
-  loadTime = c;
+function formatDate(date) {
+    const dateString = date.toString();
+    const parts = dateString.split(' ');
+    let timezoneSuffix = parts[7].endsWith('Daylight');
+    timezoneSuffix = (timezoneSuffix) ? "DT" : "ST";
+    return `${parts[0]} ${parts[1]} ${parts[2]} ${parts[3].substr(2)} ${parts[4]} ${parts[5]} (${parts[6].substr(1,1)}${timezoneSuffix})`;
 }
 
 function fileread(filename) {
-  contentss = "<h1>abc errors are free | Internal Server Error (500)</h1>";
-  statc = 500; // in case of a null file or fileread failure
-  console.log(filename)
-   if (filename.substr(filename.length - 1)=="/") {filename = "." + filename + "index.html";} else if (filename.substr(1,1) != "/") {filename = "./" + filename} else {filename = "." + filename;}
-   if ((filename.substr(1,1) == "/") && (filename.substr(2,1) == "/")) {filename = filename.replace('//','/');}
-      try { //error handling
-        var contents = fs.readFileSync(filename, 'utf8');
-      } catch (err) { //file missing or forbidden
-      contentss = "<h1>404 Not Found</h1>";
-      contents = contentss;
-      console.log("Error: "+err); //error reporter
-      statc = 404; //status code
+  currentStatusCode = 500; // in case of fatal exception
+  let contents;
+   if (filename.substr(filename.length - 1) == "/") { filename = `.${filename}index.html`; } else if (filename.substr(1,1) != "/") {filename = `./${filename}`} else {filename = `.${filename}`;}
+   if (filename.includes("//")) { filename = filename.replace('//','/'); } //cleanup
+      try {
+        contents = fs.readFileSync(filename, charset) ?? bodyResponses["blank"];
+      } catch (err) {
+      current_err = err;
+      if (err.toString().includes("ENOENT: no such file or directory")) {
+        currentStatusCode = 404;
+      }
+      contents = bodyResponses[currentStatusCode];
     }
-    contentss = contents;
-    if (contentss != null && statc != 404) { statc = 200 };
-    console.log(filename);
-  return contentss;
+    if (contents != null && currentStatusCode != 404) { currentStatusCode = 200 };
+    console.log("Serving: "+filename);
+  return contents;
 }
 
+//cli args interpreter
+const cliArgs = process.argv.slice(2);
+if (cliArgs[0] != null) { hostname = cliArgs[0]; }
+if (cliArgs[1] != null) { port = cliArgs[1]; }
+
+const error = new Proxy({ value: current_err }, {
+    set: function (target, key, value) {
+        if (value !== target[key]) { // Only set if the new value is different
+            target[key] = value;
+            console.error("> Error: " + current_err);
+        }
+        return true;
+    }
+});
+
+console.time("Init Time: ");
 const server = http.createServer((req, res) => { //server loop
     startloadingtimer();
-    pathname = url.parse(req.url).pathname; //path for retreival
-    statc = 200; //default stat code
-    res.setHeader('Content-Type', 'text/html'); //html header
-    fileread(pathname); //init file reading (sync for large files)
-    var data = contentss; //set file to data to be sent
-    var ip = req.headers['x-forwarded-for'] || req.socket.remoteAddress || null; //ip for logging
-    res.statusCode = statc; //final stat code
-    var reqpath = req.url.toString().split('?')[0];
-    if (req.method !== 'GET') {
-        res.statusCode = 501;
-        res.setHeader('Content-Type', 'text/plain');
-        return res.end('Method not implemented');
-    }
-    var file = path.join(dir, reqpath.replace(/\/$/, '/index.html'));
-    if (file.indexOf(dir + path.sep) !== 0) {
-        res.statusCode = 403;
-        res.setHeader('Content-Type', 'text/plain');
-        return res.end('Forbidden');
-    }
-    var type = mime[path.extname(file).slice(1)] || 'text/html';
-    res.setHeader('Content-Type', type);
-    if (type == "text\html") { data = data + "\n\n<script>\nconsole.log(\"Webserver Code Written in NodeJS by Sciencesid\");\nconsole.log(\"Code for server: https://github.com/Sid12323/nodehttpserver\");\n</script>"; }// ;) ;) subscrib to my yt;}
-    res.end(data); //post for get response
-    stoploadingtimer();
-    var time = new Date(); //time for logging
-    console.log("Connection from "+ip+"@"+port+" ("+statc+") for "+pathname+" at "+time+" in "+loadTime+'ms'+' on '+pathname); //logging
-    //
-    //loop over
+    try {
+      let pathname = url.parse(req.url).pathname || "/"; //path to retreive
+      let data = fileread(pathname) ?? issueUnknown;
+
+
+      let file = path.join(dir, req.url.toString().split('?')[0].replace(/\/$/, '/index.html'));
+
+      if (file.indexOf(dir + path.sep) !== 0) {
+          currentStatusCode = 403;
+      }
+      if (req.method !== 'GET') { currentStatusCode = 501; }
+
+      let type = mime[path.extname(file).slice(1)] || 'text/html';
+      res.setHeader('Content-Type', type);
+      res.statusCode = currentStatusCode;
+
+      if (type == "text/html") { data += "\n\n<script>\nconsole.log(\"NodeJS HTTP ~ Sciencesid\\nRepo: https://github.com/Sid12323/nodehttpserver\");\n</script>"; }// ;) ;) subscrib to my yt;}
+      if (currentStatusCode == 200) { res.end(data); } else { res.end(bodyResponses[currentStatusCode]); }
+
+      let ip = req.headers['x-forwarded-for'] || req.socket.remoteAddress || null;
+      stoploadingtimer();
+      console.log("+ Connection at "+formatDate(new Date())+" from "+ip+":"+port+" ("+currentStatusCode+") for "+pathname+" {"+loadTime+'ms}'); //logging
+  } catch (e) { current_err = e; }
+    error.value = current_err;
 });
 
 server.listen(port, hostname, function () { //port listener
     console.log(`Server running at http://${hostname}:${port}/`); //server info
-    console.log("Written by Sciencesid \nWebserver in Node.js\n\n Code: https://github.com/Sid12323/nodehttpserver"); //credits / info
-    stoploadingtimer();
-    console.log("Init Time: "+loadTime+'ms'+'\n');
+    console.log("Written by Sciencesid \nWebserver in Node.js\n\nCode: https://github.com/Sid12323/nodehttpserver"); //credits / info
+    console.timeEnd("Init Time: ");
+    // console.log("Init Time: "+loadTime+'ms'+'\n');
 });
