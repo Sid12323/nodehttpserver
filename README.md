@@ -5,7 +5,7 @@ A simple HTTP server written in NodeJS, useful for quickly serving files for tes
 Run the JS file (server.js) [and put your HTML file (index.html) in the same directory]
 
 # Syntax
-`node server.js *[ip]* *[port]*`
+`node server.js [ip] [port]`
 
 Having a custom IP and port are optional
 
