@@ -1,0 +1,10 @@
+* {
+  background-image: url('/images/confetti.jpg');
+}
+body,p {
+  background-image: none;
+  display: inline-block;
+
+  animation: heartBeat; /* animate.style's thingy */
+  animation-duration: .8s;
+}

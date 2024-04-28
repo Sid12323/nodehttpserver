@@ -4,12 +4,12 @@ const fs = require("fs");
 const url = require("url");
 const path = require('path');
 
+const version = "3.1"
 let current_err = "";
 let currentStatusCode = 500;
 let hostname = '0.0.0.0'
 let loadTime,time;
 
-let charset = "utf-8";
 let port = '8080'
 
 const issueUnknown = "<h1>abc errors are free | Internal Server Error (500)</h1>";
@@ -82,7 +82,7 @@ function fileread(filename) {
    if (filename.substr(filename.length - 1) == "/") { filename = `.${filename}index.html`; } else if (filename.substr(1,1) != "/") {filename = `./${filename}`} else {filename = `.${filename}`;}
    if (filename.includes("//")) { filename = filename.replace('//','/'); } //cleanup
       try {
-        contents = fs.readFileSync(filename, charset) ?? bodyResponses["blank"];
+        contents = fs.readFileSync(filename) ?? bodyResponses["blank"];
       } catch (err) {
       current_err = err;
       if (err.toString().includes("ENOENT: no such file or directory")) {
@@ -90,7 +90,7 @@ function fileread(filename) {
       }
       contents = bodyResponses[currentStatusCode];
     }
-    if (contents != null && currentStatusCode != 404) { currentStatusCode = 200 };
+    if (contents !== null && currentStatusCode != 404) { currentStatusCode = 200 };
     console.log("Serving: "+filename);
   return contents;
 }
@@ -125,11 +125,11 @@ const server = http.createServer((req, res) => { //server loop
       }
       if (req.method !== 'GET') { currentStatusCode = 501; }
 
-      let type = mime[path.extname(file).slice(1)] || 'text/html';
+      let type = mime[path.extname(file).slice(1)] || 'application/octet-stream';
       res.setHeader('Content-Type', type);
       res.statusCode = currentStatusCode;
 
-      if (type == "text/html") { data += "\n\n<script>\nconsole.log(\"NodeJS HTTP ~ Sciencesid\\nRepo: https://github.com/Sid12323/nodehttpserver\");\n</script>"; }// ;) ;) subscrib to my yt;}
+      if (type == "text/html") { data += "\n\n<script>\nconsole.log(\"NodeJS HTTP (v"+version+") ~ Sciencesid\\nRepo: https://github.com/Sid12323/nodehttpserver\");\n</script>"; }// ;) ;) subscrib to my yt;}
       if (currentStatusCode == 200) { res.end(data); } else { res.end(bodyResponses[currentStatusCode]); }
 
       let ip = req.headers['x-forwarded-for'] || req.socket.remoteAddress || null;
@@ -141,7 +141,7 @@ const server = http.createServer((req, res) => { //server loop
 
 server.listen(port, hostname, function () { //port listener
     console.log(`Server running at http://${hostname}:${port}/`); //server info
-    console.log("Written by Sciencesid \nWebserver in Node.js\n\nCode: https://github.com/Sid12323/nodehttpserver"); //credits / info
+    console.log("Written by Sciencesid \nWebserver in Node.js, v"+version+"\n\nCode: https://github.com/Sid12323/nodehttpserver"); //credits / info
     console.timeEnd("Init Time: ");
     // console.log("Init Time: "+loadTime+'ms'+'\n');
 });

@@ -1,4 +1,4 @@
-# nodehttpserver v3.0
+# nodehttpserver v3.1
 A simple HTTP server written in NodeJS, useful for quickly serving files for testing purposes (such as opening ports).
 
 # Usage
@@ -22,7 +22,7 @@ Having a custom IP and port are optional
 ## 1. Download &| Install NodeJS
 CLI:
 - Linux: `sudo apt install nodejs && node server.js`
-+ Tip: To open a port in Ubuntu VPSs, you can run `sudo ufw open {port} && sudo ufw enable` 
++ Tip: To open a port in Ubuntu VPSs, you can run `sudo ufw open {port} && sudo ufw enable`
 - Windows: download and extract https://nodejs.org/en/download/prebuilt-binaries via your favorite download manager, then open CMD/PS in the server.js directory and run `{PATH TO NODE BINARIES}\node.exe .\server.js`
 
 GUI Node Installation: Follow the instructions at https://nodejs.org/en/download/
@@ -41,7 +41,9 @@ GUI Node Installation: Follow the instructions at https://nodejs.org/en/download
 - Compact, one file
 - No dependencies, can drop in a directory and get started
 
-# Changes (2.2 -> 3.0):
+# Changes (2.2 -> 3.1):
 + major clean up: readability, more efficient
 + added more support for file types
 + added error and status handler
++ fixed images (hopefully indefinitely) via sending as binary
++ added more to demo
